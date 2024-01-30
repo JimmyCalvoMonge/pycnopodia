@@ -1,6 +1,6 @@
 # Source-sink dynamics in a two-patch SI epidemic model with life stages and no recovery from infection
 
-:cactus:
+:star:
 
 Source code for article **Source-sink dynamics in a two-patch SI epidemic model with life stages and no recovery from infection**.
 - Author: Jimmy Calvo-Monge
