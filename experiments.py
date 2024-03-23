@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 
 class PycnoSIX():
 
-    def __init__(self, mu_I, mu_S, alpha, beta, k, p, r, x00, t_max, **kwargs):
+    def __init__(self, mu_I, mu_S, alpha, beta_1, beta_2, k, p, r, x00, t_max, **kwargs):
 
         # Initial parameters
         self.mu_I = mu_I
         self.mu_S = mu_S
-        self.beta = beta
+        self.beta_1 = beta_1
+        self.beta_2 = beta_2
         self.alpha = alpha
-        self.beta = beta
         self.k = k
         self.p = p
         self.r = r
@@ -26,18 +26,24 @@ class PycnoSIX():
 
     def state_odes_system(self, x, t):
 
-        J_s1 = x[0]
-        J_i1 = x[1]
-        A_s1 = x[2]
-        A_i1 = x[3]
-        N_1 = sum(x)
+        JS1, JI1, AS1, AI1 = x[0], x[1], x[2], x[3]
+        JS2, JI2, AS2, AI2 = x[4], x[5], x[6], x[7]
+        
+        N1 = JS1 + JI1 + AS1 + AI1
+        N2 = JS2 + JI2 + AS2 + AI2
+        du = [0]*8
 
-        dJs1dt = self.p*self.r*(1-N_1/self.k)*A_s1 - self.beta*J_s1*(J_i1+A_i1)/N_1 - self.alpha*J_s1 - self.mu_S*J_s1
-        dJi1dt = self.beta*J_s1*(J_i1+A_i1)/N_1 - self.mu_I*J_i1
-        dAs1dt = self.alpha*J_s1 - self.beta*A_s1*(J_i1+A_i1)/N_1 - self.mu_S*A_s1
-        dAi1dt = self.beta*A_s1*(J_i1+A_i1)/N_1 - self.mu_I*A_i1
+        du[0] = self.p*self.r*(1-N1/self.k)*AS1-self.beta_1*JS1*(JI1+AI1)/N1-self.alpha*JS1-self.mu_S*JS1
+        du[1] = self.beta_1*JS1*(JI1+AI1)/N1-self.mu_I*JI1
+        du[2] = self.alpha*JS1-self.beta_1*AS1*(JI1+AI1)/N1-self.mu_S*AS1
+        du[3] = self.beta_1*AS1*(JI1+AI1)/N1-self.mu_I*AI1
 
-        return [dJs1dt, dJi1dt, dAs1dt, dAi1dt]
+        du[4] = (1-self.p)*self.r*(1-N2/self.k)*AS1 + self.p*self.r*(1-N2/self.k)*AS2-self.beta_2*JS2*(JI2+AI2)/N2-self.alpha*JS2-self.mu_S*JS2
+        du[5] = self.beta_2*JS2*(JI2+AI2)/N2-self.mu_I*JI2
+        du[6] = self.alpha*JS2-self.beta_2*AS2*(JI2+AI2)/N2-self.mu_S*AS2
+        du[7] = self.beta_2*AS2*(JI2+AI2)/N2-self.mu_I*AI2
+    
+        return [du[0], du[1], du[2], du[3], du[4], du[5], du[6], du[7]]
 
     def solve_odes_system_odeint(self):
         """
@@ -52,13 +58,41 @@ class PycnoSIX():
         self.Ji1 = x[0][:, 1]
         self.As1 = x[0][:, 2]
         self.Ai1 = x[0][:, 3]
+        
+        self.Js2 = x[0][:, 4]
+        self.Ji2 = x[0][:, 5]
+        self.As2 = x[0][:, 6]
+        self.Ai2 = x[0][:, 7]
 
     def plot_ode_solution(self, **kwargs):
-        title = kwargs.get('title', 'Plot')
-        plt.plot(self.time, self.Js1, label="Susceptible Juveniles")
-        plt.plot(self.time, self.Ji1, label="Infected Juveniles")
-        plt.plot(self.time, self.As1, label="Susceptible Adults")
-        plt.plot(self.time, self.Ai1, label="Infected Adults")
+        
+        patch = kwargs.get('patch', 1)
+        title = kwargs.get('title', f'Plot Patch(s) {patch}')
+        
+        if patch == 1:
+
+            plt.plot(self.time, self.Js1, label="Susceptible Juveniles")
+            plt.plot(self.time, self.Ji1, label="Infected Juveniles")
+            plt.plot(self.time, self.As1, label="Susceptible Adults")
+            plt.plot(self.time, self.Ai1, label="Infected Adults")
+            
+        elif patch == 2:
+            
+            plt.plot(self.time, self.Js2, label="Susceptible Juveniles")
+            plt.plot(self.time, self.Ji2, label="Infected Juveniles")
+            plt.plot(self.time, self.As2, label="Susceptible Adults")
+            plt.plot(self.time, self.Ai2, label="Infected Adults")
+            
+        else:
+            plt.plot(self.time, self.Js1, label="Susceptible Juveniles")
+            plt.plot(self.time, self.Ji1, label="Infected Juveniles")
+            plt.plot(self.time, self.As1, label="Susceptible Adults")
+            plt.plot(self.time, self.Ai1, label="Infected Adults")
+            plt.plot(self.time, self.Js2, label="Susceptible Juveniles")
+            plt.plot(self.time, self.Ji2, label="Infected Juveniles")
+            plt.plot(self.time, self.As2, label="Susceptible Adults")
+            plt.plot(self.time, self.Ai2, label="Infected Adults")
+
         plt.title(title)
         plt.xlabel("Time (t)")
         plt.ylabel("Number of individuals")
