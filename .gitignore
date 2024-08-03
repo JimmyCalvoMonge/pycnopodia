@@ -54,3 +54,4 @@ target/
 
 tests/*
 ArticleTemplate/*
+pycno2/EnsoData/*.csv
